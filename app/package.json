@@ -11,12 +11,6 @@
     "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug"
   },
-
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^1.9.5",
     "@stellar/freighter-api": "^6.0.1",
