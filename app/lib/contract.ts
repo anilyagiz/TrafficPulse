@@ -147,7 +147,123 @@ export class TrafficPulseClient {
     }
   }
 
-  private async pollTransaction(hash: string) {
+  async initialize(adminAddress: string, tokenAddress: string) {
+    try {
+      const account = await this.server.getAccount(adminAddress);
+      let tx = new TransactionBuilder(account, { fee: BASE_FEE })
+        .setNetworkPassphrase(NETWORK_PASSPHRASE)
+        .setTimeout(30)
+        .addOperation(
+          this.contract.call(
+            "initialize",
+            new Address(adminAddress).toScVal(),
+            new Address(tokenAddress).toScVal()
+          )
+        )
+        .build();
+
+      tx = await this.server.prepareTransaction(tx);
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      if (error) throw new Error(error);
+
+      const sendResponse = await this.server.sendTransaction(
+        TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE) as Transaction
+      );
+      return await this.pollTransaction(sendResponse.hash);
+    } catch (err) {
+      console.error("initialize error:", err);
+      throw err;
+    }
+  }
+
+  async createRound(adminAddress: string, roundId: number, endTimeSeconds: number, commitHashHex: string) {
+    try {
+      const account = await this.server.getAccount(adminAddress);
+      const commitBytes = Buffer.from(commitHashHex, 'hex');
+      
+      let tx = new TransactionBuilder(account, { fee: BASE_FEE })
+        .setNetworkPassphrase(NETWORK_PASSPHRASE)
+        .setTimeout(30)
+        .addOperation(
+          this.contract.call(
+            "create_round",
+            new Address(adminAddress).toScVal(),
+            nativeToScVal(roundId, { type: "u32" }),
+            nativeToScVal(endTimeSeconds, { type: "u64" }),
+            nativeToScVal(commitBytes, { type: "bytesN", size: 32 })
+          )
+        )
+        .build();
+
+      tx = await this.server.prepareTransaction(tx);
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      if (error) throw new Error(error);
+
+      const sendResponse = await this.server.sendTransaction(
+        TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE) as Transaction
+      );
+      return await this.pollTransaction(sendResponse.hash);
+    } catch (err) {
+      console.error("createRound error:", err);
+      throw err;
+    }
+  }
+
+  async finalizeRound(adminAddress: string, roundId: number, seedHex: string) {
+    try {
+      const account = await this.server.getAccount(adminAddress);
+      const seedBytes = Buffer.from(seedHex, 'hex');
+      
+      let tx = new TransactionBuilder(account, { fee: BASE_FEE })
+        .setNetworkPassphrase(NETWORK_PASSPHRASE)
+        .setTimeout(30)
+        .addOperation(
+          this.contract.call(
+            "finalize_round",
+            nativeToScVal(roundId, { type: "u32" }),
+            nativeToScVal(seedBytes, { type: "bytesN", size: 32 })
+          )
+        )
+        .build();
+
+      tx = await this.server.prepareTransaction(tx);
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      if (error) throw new Error(error);
+
+      const sendResponse = await this.server.sendTransaction(
+        TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE) as Transaction
+      );
+      return await this.pollTransaction(sendResponse.hash);
+    } catch (err) {
+      console.error("finalizeRound error:", err);
+      throw err;
+    }
+  }
+
+  async getUserBet(roundId: number, binId: number, userAddress: string): Promise<bigint> {
+    try {
+      const account = await this.server.getAccount("GBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+      const tx = new TransactionBuilder(account, { fee: BASE_FEE })
+        .setNetworkPassphrase(NETWORK_PASSPHRASE)
+        .setTimeout(30)
+        .addOperation(this.contract.call(
+          "get_user_bet", 
+          nativeToScVal(roundId, { type: "u32" }),
+          nativeToScVal(binId, { type: "u32" }),
+          new Address(userAddress).toScVal()
+        ))
+        .build();
+
+      const simulation = await this.server.simulateTransaction(tx);
+      if (rpc.Api.isSimulationSuccess(simulation)) {
+        return BigInt(scValToNative(simulation.result!.retval));
+      }
+      return 0n;
+    } catch {
+      return 0n;
+    }
+  }
+
 
     let response = await this.server.getTransaction(hash);
     

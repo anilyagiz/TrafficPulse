@@ -11,6 +11,7 @@ import { StakeInput } from '@/components/StakeInput';
 import { HowToPlay } from '@/components/HowToPlay';
 import { Features } from '@/components/Features';
 import { ClaimRewards } from '@/components/ClaimRewards';
+import { AdminControls } from '@/components/AdminControls';
 
 
 export default function Home() {
@@ -225,6 +226,9 @@ export default function Home() {
             </div>
 
             <HowToPlay compact />
+
+            <AdminControls />
+
 
             <footer className="text-center text-slate-500 text-sm py-6">
               <div className="flex items-center justify-center gap-4 mb-2">
