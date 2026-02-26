@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = [
+    "contracts/traffic-pulse",
+    "contracts/pulse-token",
+]
+
+[workspace.dependencies]
+soroban-sdk = "20.5.0"

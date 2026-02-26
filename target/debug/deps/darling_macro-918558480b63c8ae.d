@@ -1,0 +1,5 @@
+C:\Users\anıl\Desktop\stellar\target\debug\deps\darling_macro-918558480b63c8ae.d: C:\Users\anıl\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\darling_macro-0.20.10\src\lib.rs
+
+C:\Users\anıl\Desktop\stellar\target\debug\deps\darling_macro-918558480b63c8ae.dll: C:\Users\anıl\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\darling_macro-0.20.10\src\lib.rs
+
+C:\Users\anıl\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\darling_macro-0.20.10\src\lib.rs:
