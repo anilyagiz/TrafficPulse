@@ -39,13 +39,6 @@ export function Hero() {
         </div>
       </section>
 
-          <WalletButton />
-          <a href="#demo" className="px-6 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-slate-700 hover:text-white hover:border-slate-500 transition-all">
-            Watch Demo ▶
-          </a>
-        </div>
-      </section>
-
       {/* Demo Video Section */}
       <section id="demo" className="max-w-4xl mx-auto">
         <div className="glass-strong-card overflow-hidden">

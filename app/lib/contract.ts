@@ -24,13 +24,6 @@ export interface Round {
   winningBin?: number;
 }
 
-  roundId: number;
-  endTime: number;
-  status: 'OPEN' | 'CLOSED' | 'FINALIZED';
-  totalPool: bigint;
-  binTotals: bigint[];
-}
-
 export class TrafficPulseClient {
   private server: rpc.Server;
   private contract: Contract;
@@ -58,7 +51,7 @@ export class TrafficPulseClient {
         .build();
 
       tx = await this.server.prepareTransaction(tx);
-      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (error) throw new Error(error);
 
       const sendResponse = await this.server.sendTransaction(
@@ -100,13 +93,6 @@ export class TrafficPulseClient {
           binTotals: (roundData.bin_totals as any[]).map((t) => BigInt(t)),
           winningBin: roundData.winning_bin,
         };
-
-          roundId: roundData.id,
-          endTime: Number(roundData.end_time) * 1000,
-          status: roundData.finalized ? 'FINALIZED' : (Date.now() > Number(roundData.end_time) * 1000 ? 'CLOSED' : 'OPEN'),
-          totalPool: BigInt(roundData.total_pool),
-          binTotals: (roundData.bin_totals as any[]).map((t) => BigInt(t)),
-        };
       }
       throw new Error("Simulation failed");
     } catch (err) {
@@ -137,7 +123,7 @@ export class TrafficPulseClient {
         .build();
 
       tx = await this.server.prepareTransaction(tx);
-      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (error) throw new Error(error);
 
       const sendResponse = await this.server.sendTransaction(
@@ -166,7 +152,7 @@ export class TrafficPulseClient {
         .build();
 
       tx = await this.server.prepareTransaction(tx);
-      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (error) throw new Error(error);
 
       const sendResponse = await this.server.sendTransaction(
@@ -192,13 +178,13 @@ export class TrafficPulseClient {
             new Address(adminAddress).toScVal(),
             nativeToScVal(roundId, { type: "u32" }),
             nativeToScVal(endTimeSeconds, { type: "u64" }),
-            nativeToScVal(commitBytes, { type: "bytesN", size: 32 })
+            nativeToScVal(commitBytes, { type: "bytes" })
           )
         )
         .build();
 
       tx = await this.server.prepareTransaction(tx);
-      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (error) throw new Error(error);
 
       const sendResponse = await this.server.sendTransaction(
@@ -222,13 +208,13 @@ export class TrafficPulseClient {
           this.contract.call(
             "finalize_round",
             nativeToScVal(roundId, { type: "u32" }),
-            nativeToScVal(seedBytes, { type: "bytesN", size: 32 })
+            nativeToScVal(seedBytes, { type: "bytes" })
           )
         )
         .build();
 
       tx = await this.server.prepareTransaction(tx);
-      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (error) throw new Error(error);
 
       const sendResponse = await this.server.sendTransaction(
@@ -263,13 +249,13 @@ export class TrafficPulseClient {
   private async pollTransaction(hash: string) {
     let response = await this.server.getTransaction(hash);
     while (
-      response.status === rpc.Api.GetTransactionStatus.NOT_FOUND ||
-      response.status === rpc.Api.GetTransactionStatus.PENDING
+      
+      (response.status as any) === "PENDING"
     ) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       response = await this.server.getTransaction(hash);
     }
-    if (response.status === rpc.Api.GetTransactionStatus.FAILED) {
+    if (response.status === "FAILED") {
       throw new Error(`Transaction failed: ${JSON.stringify(response.resultXdr)}`);
     }
     return response;
