@@ -118,7 +118,37 @@ export class TrafficPulseClient {
     }
   }
 
+  async claim(userAddress: string, roundId: number) {
+    try {
+      const account = await this.server.getAccount(userAddress);
+      let tx = new TransactionBuilder(account, { fee: BASE_FEE })
+        .setNetworkPassphrase(NETWORK_PASSPHRASE)
+        .setTimeout(30)
+        .addOperation(
+          this.contract.call(
+            "claim",
+            new Address(userAddress).toScVal(),
+            nativeToScVal(roundId, { type: "u32" })
+          )
+        )
+        .build();
+
+      tx = await this.server.prepareTransaction(tx);
+      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { network: "TESTNET" });
+      if (error) throw new Error(error);
+
+      const sendResponse = await this.server.sendTransaction(
+        TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE) as Transaction
+      );
+      return await this.pollTransaction(sendResponse.hash);
+    } catch (err) {
+      console.error("claim error:", err);
+      throw err;
+    }
+  }
+
   private async pollTransaction(hash: string) {
+
     let response = await this.server.getTransaction(hash);
     
     while (

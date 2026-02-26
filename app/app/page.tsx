@@ -10,7 +10,8 @@ import { PredictionBins, BINS } from '@/components/PredictionBins';
 import { StakeInput } from '@/components/StakeInput';
 import { HowToPlay } from '@/components/HowToPlay';
 import { Features } from '@/components/Features';
-import { ToastContainer, Toast } from '@/components/ToastContainer';
+import { ClaimRewards } from '@/components/ClaimRewards';
+
 
 export default function Home() {
   const { connected, address } = useWallet();
@@ -148,6 +149,14 @@ export default function Home() {
         ) : (
           <div className="space-y-8">
             <StatsCards 
+              timeLeft={timeLeft} 
+              progressPercent={progressPercent} 
+              totalPool={round?.totalPool || 0n} 
+              status={round?.status || 'OPEN'} 
+            />
+
+            <ClaimRewards />
+
               timeLeft={timeLeft} 
               progressPercent={progressPercent} 
               totalPool={round?.totalPool || 0n} 

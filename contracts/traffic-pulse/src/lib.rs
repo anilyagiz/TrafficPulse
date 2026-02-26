@@ -1,5 +1,27 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, ledger, token, Address, Env, Symbol, Vec};
+use soroban_sdk::{contract, contractimpl, contracttype, ledger, token, Address, Env, Symbol, Vec, BytesN};
+
+#[contracttype]
+#[derive(Clone)]
+pub enum DataKey {
+    Admin,
+    Token,
+    Round(u32),
+    UserBet(u32, u32, Address), // (round_id, bin_id, user_address)
+    Commit(u32),
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct Round {
+    pub id: u32,
+    pub end_time: u64,
+    pub total_pool: i128,
+    pub bin_totals: Vec<i128>,
+    pub finalized: bool,
+    pub winning_bin: u32,
+}
+
 
 #[contracttype]
 #[derive(Clone)]
@@ -33,7 +55,112 @@ impl TrafficPulseContract {
         env.storage().instance().set(&DataKey::Token, &token);
     }
 
-    pub fn create_round(env: Env, id: u32, end_time: u64) {
+    pub fn create_round(env: Env, id: u32, end_time: u64, commit: BytesN<32>) {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        admin.require_auth();
+
+        let round = Round {
+            id,
+            end_time,
+            total_pool: 0,
+            bin_totals: Vec::from_array(&env, [0, 0, 0, 0, 0]),
+            finalized: false,
+            winning_bin: 99,
+        };
+        env.storage().persistent().set(&DataKey::Round(id), &round);
+        env.storage().persistent().set(&DataKey::Commit(id), &commit);
+    }
+
+    pub fn place_bet(env: Env, user: Address, round_id: u32, bin_id: u32, amount: i128) {
+        user.require_auth();
+
+        let mut round: Round = env.storage().persistent().get(&DataKey::Round(round_id)).expect("round not found");
+        
+        if env.ledger().timestamp() >= round.end_time {
+            panic!("round closed");
+        }
+        if bin_id >= 5 {
+            panic!("invalid bin");
+        }
+
+        let token_addr: Address = env.storage().instance().get(&DataKey::Token).unwrap();
+        let client = token::Client::new(&env, &token_addr);
+        client.transfer(&user, &env.current_contract_address(), &amount);
+
+        let mut bin_totals = round.bin_totals;
+        let current_bin_total = bin_totals.get(bin_id).unwrap();
+        bin_totals.set(bin_id, current_bin_total + amount);
+
+        round.bin_totals = bin_totals;
+        round.total_pool += amount;
+
+        env.storage().persistent().set(&DataKey::Round(round_id), &round);
+
+        let user_bet_key = DataKey::UserBet(round_id, bin_id, user.clone());
+        let mut user_bet: i128 = env.storage().persistent().get(&user_bet_key).unwrap_or(0);
+        user_bet += amount;
+        env.storage().persistent().set(&user_bet_key, &user_bet);
+
+        env.events().publish((Symbol::new(&env, "bet"), round_id, user), (bin_id, amount));
+    }
+
+    pub fn finalize_round(env: Env, round_id: u32, seed: BytesN<32>) {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        admin.require_auth();
+
+        let mut round: Round = env.storage().persistent().get(&DataKey::Round(round_id)).expect("round not found");
+        if round.finalized {
+            panic!("already finalized");
+        }
+
+        let commit: BytesN<32> = env.storage().persistent().get(&DataKey::Commit(round_id)).unwrap();
+        if env.crypto().sha256(&seed.clone().into()) != commit {
+            panic!("invalid seed");
+        }
+
+        let bytes: [u8; 32] = seed.into();
+        let winning_bin = (bytes[0] % 5) as u32;
+
+        round.finalized = true;
+        round.winning_bin = winning_bin;
+        
+        env.storage().persistent().set(&DataKey::Round(round_id), &round);
+        env.events().publish((Symbol::new(&env, "finalized"), round_id), winning_bin);
+    }
+
+    pub fn claim(env: Env, user: Address, round_id: u32) {
+        user.require_auth();
+
+        let round: Round = env.storage().persistent().get(&DataKey::Round(round_id)).expect("round not found");
+        if !round.finalized {
+            panic!("round not finalized");
+        }
+
+        let user_bet_key = DataKey::UserBet(round_id, round.winning_bin, user.clone());
+        let user_bet: i128 = env.storage().persistent().get(&user_bet_key).expect("no winning bet");
+        
+        let winning_bin_total = round.bin_totals.get(round.winning_bin).unwrap();
+        
+        // Payout = (user_bet / winning_bin_total) * (total_pool * 97%)
+        let net_pool = (round.total_pool * 97) / 100;
+        let payout = (user_bet * net_pool) / winning_bin_total;
+
+        let token_addr: Address = env.storage().instance().get(&DataKey::Token).unwrap();
+        let client = token::Client::new(&env, &token_addr);
+        client.transfer(&env.current_contract_address(), &user, &payout);
+
+        env.storage().persistent().remove(&user_bet_key);
+        env.events().publish((Symbol::new(&env, "claim"), round_id, user), payout);
+    }
+
+    pub fn get_round(env: Env, id: u32) -> Option<Round> {
+        env.storage().persistent().get(&DataKey::Round(id))
+    }
+
+    pub fn get_user_bet(env: Env, round_id: u32, bin_id: u32, user: Address) -> i128 {
+        env.storage().persistent().get(&DataKey::UserBet(round_id, bin_id, user)).unwrap_or(0)
+    }
+
         let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
         admin.require_auth();
 
