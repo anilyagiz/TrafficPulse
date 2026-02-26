@@ -12,7 +12,7 @@ import { HowToPlay } from '@/components/HowToPlay';
 import { Features } from '@/components/Features';
 import { ClaimRewards } from '@/components/ClaimRewards';
 import { AdminControls } from '@/components/AdminControls';
-
+import { ToastContainer, Toast } from '@/components/ToastContainer';
 
 export default function Home() {
   const { connected, address } = useWallet();
@@ -24,6 +24,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [progressPercent, setProgressPercent] = useState(0);
+  const [adminAddress, setAdminAddress] = useState<string | null>(null);
 
   const showToast = useCallback((message: string, type: Toast['type'] = 'info') => {
     const id = Date.now();
@@ -39,6 +40,8 @@ export default function Home() {
     try {
       const data = await trafficPulseClient.getRound(1);
       setRound(data);
+      const admin = await trafficPulseClient.getAdmin();
+      setAdminAddress(admin);
     } catch (err) {
       console.error("Failed to load round:", err);
     }
@@ -61,7 +64,6 @@ export default function Home() {
       const secs = remaining % 60;
       setTimeLeft(String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0'));
       
-      // Assume 10 min rounds for progress bar if we don't have startTime
       const totalDuration = 600; 
       const elapsed = totalDuration - remaining;
       setProgressPercent(Math.min(100, (elapsed / totalDuration) * 100));
@@ -154,15 +156,10 @@ export default function Home() {
               progressPercent={progressPercent} 
               totalPool={round?.totalPool || 0n} 
               status={round?.status || 'OPEN'} 
+              winningBin={round?.winningBin}
             />
 
             <ClaimRewards />
-
-              timeLeft={timeLeft} 
-              progressPercent={progressPercent} 
-              totalPool={round?.totalPool || 0n} 
-              status={round?.status || 'OPEN'} 
-            />
 
             <div className="glass-strong-card p-8">
               <div className="flex items-center justify-between mb-8">
@@ -216,6 +213,7 @@ export default function Home() {
                 <div className="relative z-10 text-center">
                   <div className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-cyan-500/30 hover:bg-cyan-500/30 transition-colors cursor-pointer group">
                     <svg className="w-8 h-8 text-cyan-400 ml-1 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                      <title>Play</title>
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </div>
@@ -227,8 +225,7 @@ export default function Home() {
 
             <HowToPlay compact />
 
-            <AdminControls />
-
+            {connected && address === adminAddress && <AdminControls />}
 
             <footer className="text-center text-slate-500 text-sm py-6">
               <div className="flex items-center justify-center gap-4 mb-2">

@@ -20,6 +20,25 @@ export function Hero() {
         </p>
         <div className="flex items-center justify-center gap-4">
           <WalletButton />
+          <a 
+            href="https://www.freighter.app/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="px-6 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-slate-700 hover:text-white hover:border-slate-500 transition-all"
+          >
+            Get Freighter 🦊
+          </a>
+          <a 
+            href="https://laboratory.stellar.org/#account-creator?network=testnet" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="px-6 py-2.5 rounded-xl text-sm font-medium text-cyan-400/80 border border-cyan-500/20 hover:text-cyan-400 hover:border-cyan-500/40 transition-all"
+          >
+            Testnet Faucet 🚰
+          </a>
+        </div>
+
+          <WalletButton />
           <a href="#demo" className="px-6 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-slate-700 hover:text-white hover:border-slate-500 transition-all">
             Watch Demo ▶
           </a>
