@@ -16,6 +16,28 @@ export function ClaimRewards() {
   }, [address, connected]);
 
   const handleClaim = async () => {
+    if (!address || !connected) {
+      alert("Please connect your wallet first");
+      return;
+    }
+    setLoading(true);
+    try {
+      // MVP: Always try to claim from round #1 for demo
+      await trafficPulseClient.claim(address, 1);
+      alert("Claim successful!");
+      setClaimable(0n);
+    } catch (err: any) {
+      const msg = err.message || "Nothing to claim yet. Make sure the round is finalized and you won!";
+      if (msg.includes("invalid encoded string")) {
+        alert("No rewards available for this round. Try again after a round is finalized.");
+      } else {
+        alert(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
     if (!address) return;
     setLoading(true);
     try {
