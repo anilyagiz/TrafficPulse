@@ -1,4 +1,23 @@
-# TrafficPulse - Traffic Prediction Game on Stellar
+# 🚦 TrafficPulse - Traffic Prediction Game on Stellar
+
+
+
+Predict traffic volume and win PULSE tokens! **FULLY DEPLOYED & WORKING** 🎉
+
+
+
+## 🌐 Live Demo
+
+
+
+- **TrafficPulse Contract**: [`CDNQ3BKHW6QB5Q5MNQL3FK7SWS32JK2P6UZA2L6EB7E7KHEIIDMYXLCP`](https://lab.stellar.org/r/testnet/contract/CDNQ3BKHW6QB5Q5MNQL3FK7SWS32JK2P6UZA2L6EB7E7KHEIIDMYXLCP)
+
+- **PULSE Token**: [`CAZIWBFDP4DDIRPKPJAZIMSZOKSJM42UNIET6LNO5LF5PABWGTL4DEA2`](https://lab.stellar.org/r/testnet/contract/CAZIWBFDP4DDIRPKPJAZIMSZOKSJM42UNIET6LNO5LF5PABWGTL4DEA2)
+
+- **Frontend**: http://localhost:3006
+
+- **Network**: Stellar Testnet
+
 
 Predict traffic volume and win PULSE tokens!
 
