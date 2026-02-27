@@ -39,6 +39,79 @@ export function Hero() {
         </div>
       </section>
 
+      <section id="demo" className="max-w-5xl mx-auto">
+        <div className="glass-strong-card overflow-hidden">
+          <div className="p-6 border-b border-slate-700/50">
+            <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+              <span className="text-3xl">🎬</span>
+              Live Traffic Feed
+            </h3>
+            <p className="text-slate-400 mt-2">Watch real-time traffic and make your prediction</p>
+          </div>
+          <div className="aspect-video bg-slate-900/80 relative">
+            <video
+              className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+            >
+              <source src="/demo-video.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-slate-950/50" />
+            
+            {/* Live Badge */}
+            <div className="absolute top-4 left-4 flex items-center gap-2 px-4 py-2 bg-red-500/90 rounded-full text-white text-sm font-bold animate-pulse">
+              <div className="w-2 h-2 bg-white rounded-full" />
+              LIVE
+            </div>
+
+            {/* Prediction Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+              <div className="glass-card inline-block rounded-xl px-6 py-4">
+                <p className="text-white font-semibold text-lg mb-2">Current Traffic Flow</p>
+                <p className="text-cyan-400 text-sm">Watch the video and predict the traffic volume bin</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Video Info */}
+          <div className="p-6 bg-slate-900/50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">⏱️</span>
+                </div>
+                <div>
+                  <p className="text-white font-medium text-sm">Real-Time</p>
+                  <p className="text-slate-500 text-xs">Live traffic feed</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">🎯</span>
+                </div>
+                <div>
+                  <p className="text-white font-medium text-sm">Make Prediction</p>
+                  <p className="text-slate-500 text-xs">Choose your bin below</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">🏆</span>
+                </div>
+                <div>
+                  <p className="text-white font-medium text-sm">Win PULSE</p>
+                  <p className="text-slate-500 text-xs">Share the pool</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       <section id="demo" className="max-w-4xl mx-auto">
         <div className="glass-strong-card overflow-hidden">
           <div className="aspect-video bg-slate-900/80 relative flex items-center justify-center">
