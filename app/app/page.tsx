@@ -89,14 +89,32 @@ export default function Home() {
     }
   }
 
-  if (!mounted) return null;
+  // Loading state before hydration
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-400">Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       <ToastContainer toasts={toasts} />
 
+      {/* Skip to main content link for accessibility */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-cyan-500 focus:text-white focus:rounded-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/8 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-teal-500/8 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-cyan-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
@@ -108,9 +126,9 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                <span className="text-2xl">🚦</span>
+                <span className="text-2xl" aria-hidden="true">🚦</span>
               </div>
-              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse" />
+              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse" aria-hidden="true" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white tracking-tight">TrafficPulse</h1>
@@ -119,38 +137,62 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <nav className="hidden md:flex items-center gap-1 mr-2">
-              <Link href="/" className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-slate-800/50 transition-all">
+            <nav className="hidden md:flex items-center gap-1 mr-2" aria-label="Main navigation">
+              <Link 
+                href="/" 
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-slate-800/50 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                aria-current="page"
+              >
                 Game
               </Link>
-              <Link href="/leaderboard" className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+              <Link 
+                href="/leaderboard" 
+                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
                 Leaderboard
               </Link>
             </nav>
-            <WalletButton />
+            <WalletButton showToast={showToast} />
           </div>
         </header>
 
+        {/* Mobile Navigation */}
+        <nav className="md:hidden flex items-center justify-center gap-2 mb-6" aria-label="Mobile navigation">
+          <Link 
+            href="/" 
+            className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-slate-800/50"
+            aria-current="page"
+          >
+            Game
+          </Link>
+          <Link 
+            href="/leaderboard" 
+            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white"
+          >
+            Leaderboard
+          </Link>
+        </nav>
+
         {!connected ? (
-          <div className="space-y-16">
+          <div id="main-content" className="space-y-16">
             <Hero />
             <Features />
             <HowToPlay />
             
             <section className="max-w-3xl mx-auto text-center pb-4">
               <div className="flex flex-wrap items-center justify-center gap-6 text-slate-500 text-sm">
-                <span className="flex items-center gap-2"><span className="text-lg">⛓️</span> Stellar / Soroban</span>
-                <span className="text-slate-700">•</span>
-                <span className="flex items-center gap-2"><span className="text-lg">⚛️</span> Next.js 14</span>
-                <span className="text-slate-700">•</span>
-                <span className="flex items-center gap-2"><span className="text-lg">🦀</span> Rust Smart Contracts</span>
-                <span className="text-slate-700">•</span>
-                <span className="flex items-center gap-2"><span className="text-lg">🔑</span> Freighter Wallet</span>
+                <span className="flex items-center gap-2"><span className="text-lg" aria-hidden="true">⛓️</span> Stellar / Soroban</span>
+                <span className="text-slate-700" aria-hidden="true">•</span>
+                <span className="flex items-center gap-2"><span className="text-lg" aria-hidden="true">⚛️</span> Next.js 14</span>
+                <span className="text-slate-700" aria-hidden="true">•</span>
+                <span className="flex items-center gap-2"><span className="text-lg" aria-hidden="true">🦀</span> Rust Smart Contracts</span>
+                <span className="text-slate-700" aria-hidden="true">•</span>
+                <span className="flex items-center gap-2"><span className="text-lg" aria-hidden="true">🔑</span> Freighter Wallet</span>
               </div>
             </section>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div id="main-content" className="space-y-8">
             <StatsCards 
               timeLeft={timeLeft} 
               progressPercent={progressPercent} 
@@ -159,12 +201,12 @@ export default function Home() {
               winningBin={round?.winningBin}
             />
 
-            <ClaimRewards />
+            <ClaimRewards showToast={showToast} />
 
             <div className="glass-strong-card p-8">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-xl flex items-center justify-center" aria-hidden="true">
                     <span className="text-lg">🎯</span>
                   </div>
                   <div>
@@ -195,7 +237,7 @@ export default function Home() {
             <div className="glass-card overflow-hidden">
               <div className="p-6 border-b border-slate-700/50">
                 <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                  <span className="text-2xl">🎬</span>
+                  <span className="text-2xl" aria-hidden="true">🎬</span>
                   Project Demo
                 </h2>
               </div>
@@ -206,17 +248,20 @@ export default function Home() {
                   loop
                   muted
                   playsInline
+                  aria-hidden="true"
                 >
                   <source src="/demo-video.mp4" type="video/mp4" />
                 </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/50" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/50" aria-hidden="true" />
                 <div className="relative z-10 text-center">
-                  <div className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-cyan-500/30 hover:bg-cyan-500/30 transition-colors cursor-pointer group">
-                    <svg className="w-8 h-8 text-cyan-400 ml-1 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-                      <title>Play</title>
+                  <button 
+                    className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-cyan-500/30 hover:bg-cyan-500/30 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    aria-label="Play demo video"
+                  >
+                    <svg className="w-8 h-8 text-cyan-400 ml-1 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M8 5v14l11-7z" />
                     </svg>
-                  </div>
+                  </button>
                   <p className="text-white font-semibold text-lg">Watch Demo Video</p>
                   <p className="text-slate-400 text-sm mt-1">See TrafficPulse in action</p>
                 </div>
@@ -225,28 +270,31 @@ export default function Home() {
 
             <HowToPlay compact />
 
-            {connected && address === adminAddress && <AdminControls />}
+            {connected && address === adminAddress && <AdminControls showToast={showToast} />}
 
             <footer className="text-center text-slate-500 text-sm py-6">
               <div className="flex items-center justify-center gap-4 mb-2">
-                <Link href="/leaderboard" className="text-cyan-400/80 hover:text-cyan-400 transition-colors">
+                <Link 
+                  href="/leaderboard" 
+                  className="text-cyan-400/80 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 rounded"
+                >
                   Leaderboard
                 </Link>
-                <span className="text-slate-700">•</span>
+                <span className="text-slate-700" aria-hidden="true">•</span>
                 <a
                   href={`https://stellar.expert/explorer/testnet/contract/${process.env.NEXT_PUBLIC_CONTRACT_ID || 'CDTUCJ52DABJ3GWL2N5Y5HOEHXA4IA3RUE6DILYFNHWUH4N67EHCWECC'}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400/80 hover:text-cyan-400 transition-colors"
+                  className="text-cyan-400/80 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 rounded"
                 >
                   Explorer ↗
                 </a>
-                <span className="text-slate-700">•</span>
+                <span className="text-slate-700" aria-hidden="true">•</span>
                 <a
                   href="https://github.com/anilyagiz/trafficpulse"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400/80 hover:text-cyan-400 transition-colors"
+                  className="text-cyan-400/80 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 rounded"
                 >
                   GitHub ↗
                 </a>

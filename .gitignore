@@ -3,3 +3,10 @@
 target/
 **/target/
 *.wasm
+
+# Environment files - NEVER commit these
+.env
+.env.local
+.env.*.local
+app/.env
+app/.env.local

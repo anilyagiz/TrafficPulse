@@ -24,6 +24,24 @@ export interface Round {
   winningBin?: number;
 }
 
+// Type for the raw round data returned from the contract
+interface RawRoundData {
+  id: number;
+  end_time: number | string;
+  total_pool: number | string;
+  bin_totals: (number | string)[];
+  finalized: boolean;
+  winning_bin: number;
+}
+
+// Transaction status enum to avoid `any`
+enum TransactionStatus {
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  NOT_FOUND = 'NOT_FOUND',
+}
+
 export class TrafficPulseClient {
   private server: rpc.Server;
   private contract: Contract;
@@ -75,71 +93,47 @@ export class TrafficPulseClient {
 
       const simulation = await this.server.simulateTransaction(tx);
       if (rpc.Api.isSimulationSuccess(simulation)) {
-        const roundData = scValToNative(simulation.result!.retval);
+        const roundData = scValToNative(simulation.result!.retval) as RawRoundData | null;
         if (!roundData) {
-           return {
-            roundId,
-            endTime: Date.now() + 600000,
-            status: 'OPEN',
-            totalPool: 0n,
-            binTotals: [0n, 0n, 0n, 0n, 0n],
-          };
+          return this.getDefaultRound(roundId);
         }
         return {
           roundId: roundData.id,
           endTime: Number(roundData.end_time) * 1000,
-          status: roundData.finalized ? 'FINALIZED' : (Date.now() > Number(roundData.end_time) * 1000 ? 'CLOSED' : 'OPEN'),
+          status: roundData.finalized 
+            ? 'FINALIZED' 
+            : (Date.now() > Number(roundData.end_time) * 1000 ? 'CLOSED' : 'OPEN'),
           totalPool: BigInt(roundData.total_pool),
-          binTotals: (roundData.bin_totals as any[]).map((t) => BigInt(t)),
-          winningBin: roundData.winning_bin,
+          binTotals: roundData.bin_totals.map((t) => BigInt(t)),
+          winningBin: roundData.winning_bin === 99 ? undefined : roundData.winning_bin,
         };
       }
       throw new Error("Simulation failed");
     } catch (err) {
-      // Silently return mock data for development
-      return {
-        roundId,
-        endTime: Date.now() + 600000,
-        status: 'OPEN',
-        totalPool: 0n,
-        binTotals: [0n, 0n, 0n, 0n, 0n],
-      };
-    }
-  }
-
-  async claim(userAddress: string, roundId: number) {
-    try {
-      if (!userAddress || userAddress.startsWith('G') === false) {
-        throw new Error('Invalid Stellar address');
+      // Only return mock data in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('getRound: Returning mock data in development mode');
+        return this.getDefaultRound(roundId);
       }
-      const account = await this.server.getAccount(userAddress);
-      let tx = new TransactionBuilder(account, { fee: BASE_FEE })
-        .setNetworkPassphrase(NETWORK_PASSPHRASE)
-        .setTimeout(30)
-        .addOperation(
-          this.contract.call(
-            "claim",
-            new Address(userAddress).toScVal(),
-            nativeToScVal(roundId, { type: "u32" })
-          )
-        )
-        .build();
-
-      tx = await this.server.prepareTransaction(tx);
-      const { signedTxXdr, error } = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      if (error) throw new Error(error);
-
-      const sendResponse = await this.server.sendTransaction(
-        TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE) as Transaction
-      );
-      return await this.pollTransaction(sendResponse.hash);
-    } catch (err) {
-      console.error("claim error:", err);
       throw err;
     }
   }
 
+  private getDefaultRound(roundId: number): Round {
+    return {
+      roundId,
+      endTime: Date.now() + 600000,
+      status: 'OPEN',
+      totalPool: 0n,
+      binTotals: [0n, 0n, 0n, 0n, 0n],
+    };
+  }
+
+  async claim(userAddress: string, roundId: number) {
     try {
+      if (!userAddress || !userAddress.startsWith('G') || userAddress.length !== 56) {
+        throw new Error('Invalid Stellar address format');
+      }
       const account = await this.server.getAccount(userAddress);
       let tx = new TransactionBuilder(account, { fee: BASE_FEE })
         .setNetworkPassphrase(NETWORK_PASSPHRASE)
@@ -198,6 +192,11 @@ export class TrafficPulseClient {
 
   async createRound(adminAddress: string, roundId: number, endTimeSeconds: number, commitHashHex: string) {
     try {
+      // Validate commit hash is 64 hex characters (32 bytes)
+      if (!/^[0-9a-fA-F]{64}$/.test(commitHashHex)) {
+        throw new Error('Commit hash must be 64 hex characters (32 bytes)');
+      }
+      
       const account = await this.server.getAccount(adminAddress);
       const commitBytes = Buffer.from(commitHashHex, 'hex');
       let tx = new TransactionBuilder(account, { fee: BASE_FEE })
@@ -230,6 +229,11 @@ export class TrafficPulseClient {
 
   async finalizeRound(adminAddress: string, roundId: number, seedHex: string) {
     try {
+      // Validate seed is 64 hex characters (32 bytes)
+      if (!/^[0-9a-fA-F]{64}$/.test(seedHex)) {
+        throw new Error('Seed must be 64 hex characters (32 bytes)');
+      }
+      
       const account = await this.server.getAccount(adminAddress);
       const seedBytes = Buffer.from(seedHex, 'hex');
       let tx = new TransactionBuilder(account, { fee: BASE_FEE })
@@ -269,7 +273,7 @@ export class TrafficPulseClient {
 
       const simulation = await this.server.simulateTransaction(tx);
       if (rpc.Api.isSimulationSuccess(simulation)) {
-        return scValToNative(simulation.result!.retval);
+        return scValToNative(simulation.result!.retval) as string | null;
       }
       return null;
     } catch {
@@ -279,16 +283,25 @@ export class TrafficPulseClient {
 
   private async pollTransaction(hash: string) {
     let response = await this.server.getTransaction(hash);
-    while (
-      
-      (response.status as any) === "PENDING"
-    ) {
+    
+    // Poll while transaction is pending - use the enum value
+    const pendingStatus = 'PENDING' as rpc.Api.GetTransactionStatus;
+    const failedStatus = 'FAILED' as rpc.Api.GetTransactionStatus;
+    
+    while (response.status === pendingStatus) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       response = await this.server.getTransaction(hash);
     }
-    if (response.status === "FAILED") {
-      throw new Error(`Transaction failed: ${JSON.stringify(response.resultXdr)}`);
+    
+    if (response.status === failedStatus) {
+      // Type narrow to failed response
+      const failedResponse = response as rpc.Api.GetFailedTransactionResponse;
+      const errorMsg = failedResponse.resultXdr 
+        ? `Transaction failed. Check Stellar Explorer for details. Hash: ${hash}`
+        : `Transaction failed`;
+      throw new Error(errorMsg);
     }
+    
     return response;
   }
 }
