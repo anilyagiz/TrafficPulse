@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  trafficpulse:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_CONTRACT_ID=${NEXT_PUBLIC_CONTRACT_ID:-CDTUCJ52DABJ3GWL2N5Y5HOEHXA4IA3RUE6DILYFNHWUH4N67EHCWECC}
+      - NEXT_PUBLIC_SOROBAN_RPC_URL=${NEXT_PUBLIC_SOROBAN_RPC_URL:-https://soroban-testnet.stellar.org}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3001}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - trafficpulse-network
+
+  # Optional: Local simulator for testing
+  simulator:
+    build:
+      context: .
+      dockerfile: scripts/Dockerfile.simulator
+    environment:
+      - SIM_USERS=10
+      - SIM_DURATION=30
+      - STELLAR_RPC_URL=${NEXT_PUBLIC_SOROBAN_RPC_URL:-https://soroban-testnet.stellar.org}
+    depends_on:
+      - trafficpulse
+    networks:
+      - trafficpulse-network
+    profiles:
+      - simulation
+
+networks:
+  trafficpulse-network:
+    driver: bridge

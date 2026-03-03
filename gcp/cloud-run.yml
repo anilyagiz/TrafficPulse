@@ -1,0 +1,61 @@
+# Google Cloud Run deployment configuration
+# Usage: gcloud run deploy --source . --config gcp/cloud-run.yml
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: trafficpulse
+  labels:
+    app: trafficpulse
+    environment: production
+spec:
+  template:
+    metadata:
+      annotations:
+        # Container configuration
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        run.googleapis.com/startup-cpu-boost: "true"
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/execution-environment: gen2
+        
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      
+      containers:
+        - image: gcr.io/${PROJECT_ID}/trafficpulse:latest
+          ports:
+            - name: http1
+              containerPort: 3001
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3001"
+            - name: NEXT_PUBLIC_CONTRACT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: trafficpulse-secrets
+                  key: contract-id
+            - name: NEXT_PUBLIC_SOROBAN_RPC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: trafficpulse-secrets
+                  key: soroban-rpc-url
+            - name: NEXT_PUBLIC_APP_URL
+              valueFrom:
+                secretKeyRef:
+                  name: trafficpulse-secrets
+                  key: app-url
+      
+      # Service account for Cloud Run
+      serviceAccountName: trafficpulse-sa@${PROJECT_ID}.iam.gserviceaccount.com
+      
+  traffic:
+    - percent: 100
+      latestRevision: true
