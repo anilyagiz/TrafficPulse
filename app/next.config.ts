@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   
   // Production optimizations
   poweredByHeader: false, // Remove X-Powered-By header for security
+  compress: true,
   
   // Security headers
   async headers() {
@@ -32,6 +33,16 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+          // HSTS
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          // DNS prefetch
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
           // Content Security Policy for Stellar wallet integration
           {
             key: 'Content-Security-Policy',
@@ -41,6 +52,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
+              "media-src 'self'",
               "connect-src 'self' https://soroban-testnet.stellar.org https://horizon-testnet.stellar.org wss://*",
               "frame-ancestors 'none'",
             ].join('; '),

@@ -79,6 +79,11 @@ impl TrafficPulseContract {
             panic!("end_time must be in the future");
         }
 
+        // SECURITY: Ensure round ID does not already exist
+        if env.storage().persistent().has(&DataKey::Round(id)) {
+            panic!("round already exists");
+        }
+
         let round = Round {
             id,
             end_time,
@@ -191,10 +196,31 @@ impl TrafficPulseContract {
         }
 
         // Determine winning bin from seed
-        // Use more bytes for better randomness distribution
-        let bytes: [u8; 32] = seed.into();
+        // TRUSTED ADMIN ORACLE MODEL: This commit-reveal scheme relies on the admin being trustworthy.
+        // The admin must commit to a seed BEFORE seeing the final distribution of bets.
+        // While we mix the seed with round.end_time for additional entropy, a malicious admin
+        // could still manipulate outcomes by:
+        // 1. Placing bets through alt accounts after committing
+        // 2. Choosing seeds that favor their bet distribution
+        // 3. Delaying reveal until favorable conditions
+        //
+        // For production deployment, consider:
+        // - External oracle (Chainlink, Band Protocol)
+        // - Multi-sig admin with 2/3 approval requirement
+        // - VRF (Verifiable Random Function) for true randomness
+        let mut mixed_bytes = [0u8; 40];
+        let seed_bytes: [u8; 32] = seed.into();
+        for i in 0..32 {
+            mixed_bytes[i] = seed_bytes[i];
+        }
+        // Mix with round end_time for additional entropy
+        let end_time_bytes = round.end_time.to_be_bytes();
+        for i in 0..8 {
+            mixed_bytes[32 + i] = end_time_bytes[i];
+        }
+        let hash = env.crypto().sha256(&soroban_sdk::Bytes::from_array(&env, &mixed_bytes));
+        let bytes: [u8; 32] = hash.into();
         let winning_bin = ((bytes[0] as u32 + (bytes[1] as u32) * 256 + (bytes[2] as u32) * 65536) % 5) as u32;
-
         round.finalized = true;
         round.winning_bin = winning_bin;
 

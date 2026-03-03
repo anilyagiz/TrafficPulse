@@ -40,10 +40,9 @@ jobs:
         working-directory: app
         run: npm run build
 
-      - name: Run tests
+      - name: Run E2E tests
         working-directory: app
         run: npm run test
-        continue-on-error: true # E2E tests may fail without wallet
 
   # Smart Contract Build
   contracts:
@@ -98,7 +97,6 @@ jobs:
       - name: Run npm audit
         working-directory: app
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: Check for .env files
         run: |
@@ -153,15 +151,17 @@ jobs:
         working-directory: app
         run: npm ci
 
-      - name: Build for production
-        working-directory: app
-        run: npm run build
-        env:
-          NEXT_PUBLIC_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CONTRACT_ID }}
-          NEXT_PUBLIC_TOKEN_ID: ${{ secrets.NEXT_PUBLIC_TOKEN_ID }}
-          NEXT_PUBLIC_SOROBAN_RPC_URL: ${{ secrets.NEXT_PUBLIC_SOROBAN_RPC_URL }}
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
 
-      - name: Deploy notification
-        run: |
-          echo "Deployment would happen here"
-          echo "Configure your deployment provider (Vercel, AWS, etc.)"
+      - name: Pull Vercel Environment
+        working-directory: app
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build for Vercel
+        working-directory: app
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        working-directory: app
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

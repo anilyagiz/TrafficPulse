@@ -84,7 +84,7 @@ impl PulseToken {
         let from_balance: i128 = env.storage().persistent().get(&from_key).unwrap_or(0);
 
         if from_balance < amount {
-            return false;
+            panic!("insufficient balance");
         }
 
         env.storage()
@@ -117,7 +117,7 @@ impl PulseToken {
         let allowed: i128 = env.storage().persistent().get(&allowance_key).unwrap_or(0);
 
         if allowed < amount {
-            return false;
+            panic!("insufficient allowance");
         }
 
         // Check balance
@@ -125,7 +125,7 @@ impl PulseToken {
         let from_balance: i128 = env.storage().persistent().get(&from_key).unwrap_or(0);
 
         if from_balance < amount {
-            return false;
+            panic!("insufficient balance");
         }
 
         // Update allowance

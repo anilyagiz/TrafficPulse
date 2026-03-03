@@ -1,0 +1,16 @@
+{
+  "name": "TrafficPulse",
+  "short_name": "TrafficPulse",
+  "description": "Predict traffic volume and win PULSE tokens on Stellar",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0891b2",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

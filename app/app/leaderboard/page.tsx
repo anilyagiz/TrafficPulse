@@ -14,7 +14,7 @@ export default function LeaderboardPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       {/* Background effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
@@ -109,6 +109,13 @@ export default function LeaderboardPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="mt-4 text-center">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-medium">
+            <span aria-hidden="true">ℹ️</span>
+            Testnet Demo Data — Rankings will reset on mainnet launch
+          </span>
         </div>
 
         <footer className="text-center text-slate-500 text-sm py-8">

@@ -1,4 +1,4 @@
-# Playwright E2E Tests - Extended
+// Playwright E2E Tests - Extended
 
 import { test, expect } from '@playwright/test';
 
